@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Client Dashboard | FreelancerHub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    button, a { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    button:active, a:active { transform: scale(0.97); }
+    tr:hover { transform: none; }
+    .hover\:border-emerald-500\/50:hover { transform: translateY(-3px); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased flex flex-col justify-between">
+
+  <nav class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+    <a href="{% url 'home' %}" class="flex items-center space-x-3 text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-500">
+      <span class="text-2xl">🚀</span>
+      <span>FreelancerHub</span>
+    </a>
+    <div class="flex items-center space-x-4">
+      <a href="{% url 'client_dashboard' %}" class="text-xs font-semibold px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-lg transition">
+        Client_Dashboard
+      </a>
+      <a href="{% url 'browse_jobs' %}" class="text-sm text-slate-300 hover:text-emerald-400 transition">Browse Jobs</a>
+      <a href="{% url 'profile' username=user.username %}" class="text-sm text-slate-300 hover:text-emerald-400 transition">Profile</a>
+      <a href="{% url 'logout' %}" data-confirm="Are you sure you want to sign out?" class="text-sm px-4 py-2 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition">Logout</a>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-6 py-8 space-y-8 flex-grow w-full">
+
+    {% if messages %}
+      <div class="space-y-2">
+        {% for message in messages %}
+          <div class="p-4 rounded-xl text-xs font-semibold border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="relative rounded-3xl bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-500 p-6 md:p-8 shadow-xl overflow-hidden border border-blue-500/30">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+        <div class="flex items-center gap-5">
+          <div class="w-20 h-20 rounded-2xl bg-slate-900 border-2 border-blue-400 flex items-center justify-center text-3xl font-extrabold text-blue-400 shadow-inner">
+            {{ user.username|slice:":1"|upper }}
+          </div>
+          <div>
+            <div class="flex items-center gap-3">
+              <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight">Welcome back, {{ user.get_full_name|default:user.username }}!</h1>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-400/20 text-blue-200 border border-blue-300/30">Client</span>
+            </div>
+            <p class="text-xs text-blue-100/80 mt-1 font-medium">Manage your job postings, active contracts, and escrow balance.</p>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          <div class="px-5 py-3 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-sm text-center min-w-[160px]">
+            <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Escrow Balance</span>
+            <span class="text-xl font-black text-white block">${{ user.profile.points|floatformat:2 }} <span class="text-xs font-normal text-slate-400">pts</span></span>
+          </div>
+          <a href="{% url 'create_job' %}" class="w-full sm:w-auto text-center px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-xs transition shadow-lg">
+            + Post New Job
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="px-4 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-center">
+        <span class="text-xl font-black text-white block">{{ total_posted_count }}</span>
+        <span class="text-[10px] text-slate-400 uppercase tracking-wider">Total Posted</span>
+      </div>
+      <div class="px-4 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-center">
+        <span class="text-xl font-black text-cyan-400 block">{{ open_count }}</span>
+        <span class="text-[10px] text-slate-400 uppercase tracking-wider">Open Jobs</span>
+      </div>
+      <div class="px-4 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-center">
+        <span class="text-xl font-black text-amber-400 block">{{ progress_count }}</span>
+        <span class="text-[10px] text-slate-400 uppercase tracking-wider">In Progress</span>
+      </div>
+      <div class="px-4 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-center">
+        <span class="text-xl font-black text-emerald-400 block">{{ completed_count }}</span>
+        <span class="text-[10px] text-slate-400 uppercase tracking-wider">Completed</span>
+      </div>
+    </div>
+
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span>📋</span>
+          <span>Your Posted Contracts</span>
+        </h2>
+        <span class="text-xs px-3 py-1 rounded-full bg-slate-800 text-slate-300 font-semibold">{{ posted_jobs|length }} Total</span>
+      </div>
+
+      {% if posted_jobs %}
+        <div class="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead class="bg-slate-800/50 text-slate-400 uppercase text-[10px]">
+                <tr>
+                  <th class="text-left px-4 py-3">Job Title</th>
+                  <th class="text-left px-4 py-3">Budget</th>
+                  <th class="text-left px-4 py-3">Status</th>
+                  <th class="text-left px-4 py-3">Freelancer</th>
+                  <th class="text-left px-4 py-3">Applications</th>
+                  <th class="text-right px-4 py-3">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800">
+                {% for job in posted_jobs %}
+                  <tr class="hover:bg-slate-800/40 transition">
+                    <td class="px-4 py-3">
+                      <div class="font-bold text-white">{{ job.title }}</div>
+                      <div class="text-slate-500">Posted {{ job.created_at|date:"M d, Y" }}</div>
+                    </td>
+                    <td class="px-4 py-3 font-bold text-emerald-400">${{ job.budget|floatformat:2 }}</td>
+                    <td class="px-4 py-3">
+                      {% if job.status == 'open' %}
+                        <span class="px-2 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px] font-bold">Open</span>
+                      {% elif job.status == 'in_progress' %}
+                        <span class="px-2 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold">In Progress</span>
+                      {% elif job.status == 'submitted' %}
+                        <span class="px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-bold">Submitted</span>
+                      {% elif job.status == 'completed' %}
+                        <span class="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">Completed</span>
+                      {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                      {% if job.freelancer %}
+                        <a href="{% url 'profile' username=job.freelancer.username %}" class="text-cyan-400 hover:underline font-semibold">@{{ job.freelancer.username }}</a>
+                      {% else %}
+                        <span class="text-slate-500">Unassigned</span>
+                      {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="px-2 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300">{{ job.applications.count }} Proposals</span>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <a href="{% url 'job_detail' job.id %}" class="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:border-cyan-500 hover:text-cyan-400 transition">View Details</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% else %}
+        <div class="rounded-2xl bg-slate-900 border border-dashed border-slate-800 py-12 text-center">
+          <p class="text-slate-300 font-semibold mb-1">No job postings found</p>
+          <p class="text-slate-500 text-xs mb-4">Get started by posting your first job contract to hire top talent.</p>
+          <a href="{% url 'create_job' %}" class="inline-block px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition">Post a Job Now</a>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-white flex items-center gap-2">
+        <span>📥</span>
+        <span>Pending Applications</span>
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for app in applications %}
+          {% if app.status == 'pending' %}
+          <div class="rounded-2xl bg-slate-900 border border-slate-800 p-5 space-y-3">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  For: {{ app.job.title }}
+                </span>
+                <h3 class="text-sm font-bold text-white mt-1">@{{ app.applicant.username }}</h3>
+              </div>
+              <span class="text-xs font-bold text-emerald-400">🪙 Bid: {{ app.bid_amount }}</span>
+            </div>
+            <p class="text-xs text-slate-400">{{ app.proposal }}</p>
+            <div class="flex gap-2 pt-2 border-t border-slate-800">
+              <a href="{% url 'accept_proposal' app.id %}" data-confirm="Accept @{{ app.applicant.username }}'s proposal for {{ app.job.title }}? This assigns them the job." class="flex-1 text-center px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition">
+                ✅ Accept
+              </a>
+              <a href="{% url 'reject_proposal' app.id %}" data-confirm="Reject @{{ app.applicant.username }}'s proposal?" class="flex-1 text-center px-3 py-2 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 text-xs font-bold transition">
+                ❌ Reject
+              </a>
+            </div>
+          </div>
+          {% endif %}
+        {% empty %}
+          <div class="col-span-full py-8 text-center rounded-2xl bg-slate-900/50 border border-dashed border-slate-800 text-slate-500 text-sm">
+            No applications yet.
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="space-y-4">
+      <h2 class="text-xl font-bold text-white flex items-center gap-2">
+        <span>🔍</span>
+        <span>Active & Submitted Contracts</span>
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for project in assigned_projects %}
+        <div class="rounded-2xl bg-slate-900 border border-slate-800 p-6 space-y-3 hover:border-emerald-500/50 transition shadow-md">
+          <div class="flex justify-between items-start">
+            <h3 class="text-lg font-semibold text-white">{{ project.title }}</h3>
+            <span class="text-xs font-bold text-emerald-400">🪙 {{ project.budget }}</span>
+          </div>
+          <p class="text-xs text-slate-400">Freelancer: {{ project.freelancer.username|default:"Unassigned" }}</p>
+
+          {% if project.status == 'submitted' %}
+            {% if project.submission_url %}
+              <a href="{{ project.submission_url }}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-400 hover:underline block">
+                🔗 View Submitted Work
+              </a>
+            {% endif %}
+            <a href="{% url 'approve_and_payout' project.id %}" data-confirm="Approve this work and pay {{ project.budget }} points to {{ project.freelancer.username }}? This cannot be undone." class="block w-full text-center py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-xl text-xs transition shadow-lg">
+              ✅ Approve & Pay {{ project.budget }} pts
+            </a>
+          {% elif project.status == 'in_progress' %}
+            <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-400 font-medium text-center">
+              ⏳ Waiting for freelancer to submit work
+            </div>
+          {% elif project.status == 'completed' %}
+            <div class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-400 font-bold text-center">
+              ✅ Completed — Paid
+            </div>
+          {% endif %}
+        </div>
+        {% empty %}
+        <div class="col-span-full py-8 text-center rounded-2xl bg-slate-900/50 border border-dashed border-slate-800 text-slate-500 text-sm">
+          No active or completed contracts yet.
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="border-t border-slate-900 py-4 text-center text-xs text-slate-600">
+    &copy; FreelancerHub. All rights reserved.
+  </footer>
+
+  <!-- Universal Confirm Modal -->
+  <div id="confirmModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-[100]">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl transform transition-all scale-95 opacity-0" id="confirmModalBox">
+      <h3 class="text-base font-bold text-white mb-2">Are you sure?</h3>
+      <p id="confirmModalMsg" class="text-xs text-slate-400 mb-6">Please confirm this action.</p>
+      <div class="flex justify-end gap-3">
+        <button type="button" id="confirmCancelBtn" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">Cancel</button>
+        <button type="button" id="confirmOkBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-md transition">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    let pendingEl = null;
+    const modal = document.getElementById('confirmModal');
+    const box = document.getElementById('confirmModalBox');
+    const msgEl = document.getElementById('confirmModalMsg');
+
+    function openModal(el) {
+      pendingEl = el;
+      msgEl.textContent = el.getAttribute('data-confirm') || 'Please confirm this action.';
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      requestAnimationFrame(() => {
+        box.classList.remove('scale-95', 'opacity-0');
+        box.classList.add('scale-100', 'opacity-100');
+      });
+    }
+
+    function closeModal() {
+      box.classList.add('scale-95', 'opacity-0');
+      box.classList.remove('scale-100', 'opacity-100');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        pendingEl = null;
+      }, 150);
+    }
+
+    document.addEventListener('click', function (e) {
+      const el = e.target.closest('[data-confirm]');
+      if (el) { e.preventDefault(); openModal(el); }
+    });
+
+    document.getElementById('confirmCancelBtn').addEventListener('click', closeModal);
+
+    document.getElementById('confirmOkBtn').addEventListener('click', function () {
+      if (!pendingEl) return;
+      const el = pendingEl;
+      closeModal();
+      if (el.tagName === 'A') window.location.href = el.getAttribute('href');
+      else if (el.tagName === 'BUTTON' && el.form) el.form.submit();
+      else if (el.closest('form')) el.closest('form').submit();
+    });
+
+    modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
+  })();
+  </script>
+
+</body>
+</html>

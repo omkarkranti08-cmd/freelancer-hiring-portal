@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workspace: {{ project.title }} | FreelancerHub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    .subtle-grid {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-blue-600 selection:text-white subtle-grid">
+
+  <!-- Header Navigation -->
+  <nav class="border-b border-slate-800 bg-slate-950/90 backdrop-blur-xl sticky top-0 z-50 px-4 sm:px-8 py-3.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <a href="{% url 'dashboard' %}" class="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to Dashboard
+      </a>
+      <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+        <span class="truncate max-w-xs sm:max-w-md">Workspace: {{ project.title }}</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6 flex-grow w-full">
+
+    <!-- System Messages -->
+    {% if messages %}
+      <div class="space-y-2">
+        {% for message in messages %}
+          <div class="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium flex items-center gap-2">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Project Header Details -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-xl">
+      <div class="space-y-1.5">
+        <span class="inline-block px-2.5 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider">Active Workspace</span>
+        <h1 class="text-2xl font-extrabold text-white tracking-tight">{{ project.title }}</h1>
+        <p class="text-xs text-slate-400 leading-relaxed max-w-2xl">{{ project.description }}</p>
+        {% if project.freelancer %}
+          <div class="pt-2 flex items-center gap-2 text-xs">
+            <span class="text-slate-400 font-medium">Assigned Freelancer:</span>
+            <span class="px-2 py-0.5 rounded-md bg-slate-800 text-blue-400 font-semibold">@{{ project.freelancer.username }}</span>
+          </div>
+        {% endif %}
+      </div>
+      <div class="px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0 min-w-[140px] text-right">
+        <span class="text-[10px] uppercase font-bold block text-slate-400 tracking-wider">Project Budget</span>
+        <span class="text-xl font-extrabold">${{ project.budget }}</span>
+      </div>
+    </div>
+
+    <!-- Code Editor Form Container -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 shadow-xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <h2 class="text-sm font-bold text-white flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+          </svg>
+          <span>Submit / Edit Source Code</span>
+        </h2>
+        <span class="text-[11px] text-slate-500">Supported format: Plain text / Code</span>
+      </div>
+
+      {% if request.user == project.freelancer %}
+        <form action="{% url 'submit_project_work' project.id %}" method="POST" class="space-y-4">
+          {% csrf_token %}
+
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-slate-300 block">Source Code Output:</label>
+            <textarea
+              name="submitted_code"
+              rows="12"
+              required
+              placeholder="// Type or paste your solution code here (HTML, Python, JS, etc.)..."
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono text-emerald-400 placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 leading-relaxed transition"
+            >{{ project.submitted_code|default:''|escape }}</textarea>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-slate-300 block">External Repository / Live URL (Optional):</label>
+            <input
+              type="url"
+              name="submission_url"
+              value="{{ project.submission_url|default:''|escape }}"
+              placeholder="https://github.com/username/project"
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+            >
+          </div>
+
+          <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-blue-600/20 transition flex items-center justify-center gap-2 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+            </svg>
+            <span>Submit Solution for Review & Milestone Release</span>
+          </button>
+        </form>
+      {% else %}
+        <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium flex items-center gap-2">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <span>Only the assigned freelancer (@{{ project.freelancer.username|default:"Unassigned" }}) can submit code for this project workspace.</span>
+        </div>
+      {% endif %}
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 bg-slate-950 py-6 px-4 text-center text-xs text-slate-500">
+    © 2026 FreelancerHub. All rights reserved.
+  </footer>
+  <!-- Universal Confirm Modal -->
+<div id="confirmModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-[100]">
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl transform transition-all scale-95 opacity-0" id="confirmModalBox">
+    <h3 class="text-base font-bold text-white mb-2">Are you sure?</h3>
+    <p id="confirmModalMsg" class="text-xs text-slate-400 mb-6">Please confirm this action.</p>
+    <div class="flex justify-end gap-3">
+      <button type="button" id="confirmCancelBtn" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">
+        Cancel
+      </button>
+      <button type="button" id="confirmOkBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-md transition">
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  let pendingEl = null;
+  const modal = document.getElementById('confirmModal');
+  const box = document.getElementById('confirmModalBox');
+  const msgEl = document.getElementById('confirmModalMsg');
+
+  function openModal(el) {
+    pendingEl = el;
+    msgEl.textContent = el.getAttribute('data-confirm') || 'Please confirm this action.';
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    requestAnimationFrame(() => {
+      box.classList.remove('scale-95', 'opacity-0');
+      box.classList.add('scale-100', 'opacity-100');
+    });
+  }
+
+  function closeModal() {
+    box.classList.add('scale-95', 'opacity-0');
+    box.classList.remove('scale-100', 'opacity-100');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      pendingEl = null;
+    }, 150);
+  }
+
+  document.addEventListener('click', function (e) {
+    const el = e.target.closest('[data-confirm]');
+    if (el) {
+      e.preventDefault();
+      openModal(el);
+    }
+  });
+
+  document.getElementById('confirmCancelBtn').addEventListener('click', closeModal);
+
+  document.getElementById('confirmOkBtn').addEventListener('click', function () {
+    if (!pendingEl) return;
+    const el = pendingEl;
+    closeModal();
+    if (el.tagName === 'A') {
+      window.location.href = el.getAttribute('href');
+    } else if (el.tagName === 'BUTTON' && el.form) {
+      el.form.submit();
+    } else if (el.closest('form')) {
+      el.closest('form').submit();
+    }
+  });
+
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal) closeModal();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+  });
+})();
+</script>
+
+</body>
+</html>

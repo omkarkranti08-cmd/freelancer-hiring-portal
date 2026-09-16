@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreelancerHub | Hire Top Talent & Discover Projects</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { colors: { brand: { 50: '#f0f7ff', 100: '#e0effe', 500: '#2563eb', 600: '#1d4ed8', 700: '#1e40af', 900: '#1e3a8a' } } } }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    .subtle-grid { background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px); background-size: 24px 24px; }
+    button, a { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+    button:active, a:active { transform: scale(0.97); }
+    .job-card:hover { transform: translateY(-3px); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-blue-500 selection:text-white">
+
+  <!-- Navigation -->
+  <nav class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50 px-4 sm:px-8 py-3.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+
+      <a href="{% url 'home' %}" class="flex items-center gap-2.5 group shrink-0">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform duration-200">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-extrabold text-lg text-white tracking-tight leading-none">FreelancerHub</span>
+          <span class="text-[10px] text-slate-400 font-medium tracking-wide">TALENT MARKETPLACE</span>
+        </div>
+      </a>
+
+      <div class="hidden md:flex items-center flex-1 max-w-md relative">
+        <svg class="w-4 h-4 absolute left-3.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input
+          type="text"
+          id="nav-search-input" onkeyup="syncAndFilter(this.value, 'nav')"
+          placeholder="Search jobs, skills, or clients... (Press '/' to focus)"
+          aria-label="Search jobs"
+          class="w-full pl-10 pr-12 py-2 text-xs bg-slate-900 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+        >
+        <span class="absolute right-3 text-[10px] font-mono text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">/</span>
+      </div>
+
+      <div class="flex items-center gap-3 sm:gap-4 text-xs font-semibold">
+        <a href="{% url 'browse_jobs' %}" class="text-blue-400 hover:text-white transition px-2 py-1">Browse Jobs</a>
+        <a href="{% url 'inbox' %}" class="text-slate-300 hover:text-white transition px-2 py-1">Inbox</a>
+
+        {% if user.is_authenticated %}
+          {% if user.role == 'client' %}
+            <a href="{% url 'client_dashboard' %}" class="text-slate-300 hover:text-white transition px-2 py-1 hidden sm:inline-block">Dashboard</a>
+          {% else %}
+            <a href="{% url 'freelancer_dashboard' %}" class="text-slate-300 hover:text-white transition px-2 py-1 hidden sm:inline-block">Dashboard</a>
+          {% endif %}
+          <a href="{% url 'profile' user.username %}" class="text-slate-300 hover:text-white transition px-2 py-1 hidden sm:inline-block">Profile</a>
+          <div class="h-4 w-px bg-slate-800 hidden sm:block"></div>
+          <div class="flex items-center gap-2">
+            <span class="text-slate-400 text-xs font-normal hidden lg:inline-block">Hi, <strong class="text-slate-200 font-semibold">{{ user.username }}</strong></span>
+            <a href="{% url 'logout' %}" data-confirm="Are you sure you want to sign out?" class="px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-rose-400 hover:border-rose-500/30 transition shadow-sm">
+              Sign Out
+            </a>
+          </div>
+        {% else %}
+          <a href="{% url 'login' %}" class="text-slate-300 hover:text-white transition px-2 py-1">Log In</a>
+          <a href="{% url 'register' %}" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 shadow-md shadow-blue-600/20 transition font-medium">
+            Post a Job / Sign Up
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-8 pt-4 w-full space-y-2">
+      {% for message in messages %}
+        <div class="p-3.5 rounded-xl {% if message.tags == 'error' %}bg-rose-500/10 border-rose-500/20 text-rose-400{% else %}bg-emerald-500/10 border-emerald-500/20 text-emerald-400{% endif %} border text-xs font-medium">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Hero Header -->
+  <header class="relative border-b border-slate-800/80 bg-slate-950 subtle-grid py-12 lg:py-16 overflow-hidden">
+    <div class="absolute top-0 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute bottom-0 left-1/3 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
+      <div class="max-w-3xl space-y-5">
+
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-300 text-xs font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Connecting 12,400+ developers, designers & creators</span>
+        </div>
+
+        <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+          Find top freelance talent or land your next high-value project.
+        </h1>
+
+        <p class="text-sm sm:text-base text-slate-400 max-w-2xl leading-relaxed">
+          A clean, verified marketplace for developers and businesses. Post work requirements, inspect candidate portfolios, or pitch directly with transparent pricing.
+        </p>
+
+        <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-2xl">
+          <div class="relative flex-1">
+            <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input
+              type="text"
+              id="hero-search-input"
+              onkeyup="syncAndFilter(this.value, 'hero')"
+              placeholder="e.g. Django, Web Scraping, React, UI Design..."
+              aria-label="Search skills or jobs"
+              class="w-full pl-10 pr-4 py-3 text-xs sm:text-sm bg-slate-900/90 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition shadow-inner"
+            >
+          </div>
+          {% if user.is_authenticated %}
+            {% if user.role == 'client' %}
+              <a href="{% url 'client_dashboard' %}" class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-blue-600/20 text-center transition shrink-0">
+                Go to Dashboard
+              </a>
+            {% else %}
+              <a href="{% url 'freelancer_dashboard' %}" class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-blue-600/20 text-center transition shrink-0">
+                Go to Dashboard
+              </a>
+            {% endif %}
+          {% else %}
+            <a href="{% url 'register' %}" class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-blue-600/20 text-center transition shrink-0">
+              Post a Project
+            </a>
+          {% endif %}
+        </div>
+
+        <div class="pt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+          <span class="font-medium text-slate-500">Popular:</span>
+          <button type="button" onclick="setCategoryFilter('Python')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800/80 text-slate-300 transition">Python</button>
+          <button type="button" onclick="setCategoryFilter('Django')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800/80 text-slate-300 transition">Django</button>
+          <button type="button" onclick="setCategoryFilter('React')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800/80 text-slate-300 transition">React</button>
+          <button type="button" onclick="setCategoryFilter('Full-Stack')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800/80 text-slate-300 transition">Full-Stack</button>
+          <button type="button" onclick="setCategoryFilter('Editing')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800/80 text-slate-300 transition">Editing & Media</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Job Listings Section -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-8 py-10 w-full space-y-6 flex-grow">
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div>
+        <h2 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+          <span>Latest Active Jobs</span>
+          <span id="job-count-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-medium">0 jobs available</span>
+        </h2>
+        <p class="text-xs text-slate-400 mt-1">Direct listings from clients seeking software development, media editing, and technical services.</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
+        <button type="button" onclick="filterCategory('all', this)" class="category-btn px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium transition">All Jobs</button>
+        <button type="button" onclick="filterCategory('development', this)" class="category-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 font-medium transition">Development</button>
+        <button type="button" onclick="filterCategory('ai', this)" class="category-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 font-medium transition">AI & Media</button>
+        <button type="button" onclick="filterCategory('web', this)" class="category-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 font-medium transition">E-Commerce</button>
+      </div>
+    </div>
+
+    <div id="jobs-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+      {% for job in jobs %}
+        <article data-category="{{ job.category|lower|default:'development' }}" data-title="{{ job.title|lower }}" data-desc="{{ job.description|lower }}" class="job-card rounded-xl bg-slate-900/90 border border-slate-800/90 hover:border-slate-700 p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-xl group">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                  {{ job.title|slice:":1"|upper }}
+                </div>
+                <span class="text-xs font-medium text-slate-400">Client Verified</span>
+              </div>
+              <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                ${{ job.budget }}
+              </span>
+            </div>
+
+            <h3 class="text-base font-bold text-white group-hover:text-blue-400 transition line-clamp-1">
+              {{ job.title }}
+            </h3>
+
+            <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+              {{ job.description }}
+            </p>
+          </div>
+
+          <div class="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+            <span class="flex items-center gap-1">
+              <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              {{ job.location|default:"Remote" }}
+            </span>
+
+            {% if user.is_authenticated %}
+              {% if user.role == 'client' %}
+                <a href="{% url 'job_detail' job.id %}" class="px-3 py-1 rounded bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/20 transition font-medium">
+                  View Details
+                </a>
+              {% else %}
+                <a href="{% url 'job_detail' job.id %}" class="px-3 py-1 rounded bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/20 transition font-medium">
+                  View & Apply
+                </a>
+              {% endif %}
+            {% else %}
+              <a href="{% url 'login' %}" class="px-3 py-1 rounded bg-slate-800 text-slate-300 hover:text-white transition font-medium">
+                Log in to apply
+              </a>
+            {% endif %}
+          </div>
+        </article>
+      {% empty %}
+
+        <article data-category="ai" data-title="ai photo video editing media enhancement" data-desc="enhance product visuals color grade imagery" class="job-card rounded-xl bg-slate-900/90 border border-slate-800/90 hover:border-slate-700 p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-xl group">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-indigo-950 border border-indigo-800/60 flex items-center justify-center text-xs font-bold text-indigo-400">AI</div>
+                <div>
+                  <span class="text-xs font-semibold text-slate-200 block">Media Studio Inc.</span>
+                  <span class="text-[10px] text-slate-500">Posted 2 hours ago</span>
+                </div>
+              </div>
+              <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                $75.00 <span class="text-[10px] font-normal text-slate-400">Fixed</span>
+              </span>
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-blue-400 transition leading-snug">AI Photo & Video Editing / Media Enhancement</h3>
+            <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">Looking for a freelancer to enhance product visuals, color grade imagery using AI tools, and deliver high-resolution promotional assets with review checkpoints.</p>
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">Photo Editing</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">AI Enhancement</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">Media</span>
+            </div>
+          </div>
+          <div class="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+            <span class="flex items-center gap-1 text-slate-400">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Remote
+            </span>
+            <a href="{% url 'login' %}" class="px-3.5 py-1.5 rounded-lg bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/20 transition font-medium">Apply Now</a>
+          </div>
+        </article>
+
+        <article data-category="web" data-title="flipkart web application e-commerce store frontend backend" data-desc="full stack e-commerce web platform custom design payment gateway product catalog" class="job-card rounded-xl bg-slate-900/90 border border-slate-800/90 hover:border-slate-700 p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-xl group">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-blue-950 border border-blue-800/60 flex items-center justify-center text-xs font-bold text-blue-400">FW</div>
+                <div>
+                  <span class="text-xs font-semibold text-slate-200 block">RetailTech Global</span>
+                  <span class="text-[10px] text-slate-500">Posted 1 day ago</span>
+                </div>
+              </div>
+              <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                $1,000.00 <span class="text-[10px] font-normal text-slate-400">Fixed</span>
+              </span>
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-blue-400 transition leading-snug">Flipkart E-Commerce Web Application Development</h3>
+            <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">Full-stack developer needed to construct an e-commerce platform clone featuring catalog search, shopping cart management, user authentication, and payment portal integration.</p>
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">Django</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">Tailwind CSS</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">E-Commerce</span>
+            </div>
+          </div>
+          <div class="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+            <span class="flex items-center gap-1 text-slate-400">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Thane, IN
+            </span>
+            <a href="{% url 'login' %}" class="px-3.5 py-1.5 rounded-lg bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/20 transition font-medium">Apply Now</a>
+          </div>
+        </article>
+
+        <article data-category="development" data-title="django rest api postgresql backend developer" data-desc="build scalable rest apis for mobile client integration clean architecture" class="job-card rounded-xl bg-slate-900/90 border border-slate-800/90 hover:border-slate-700 p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-xl group">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-emerald-950 border border-emerald-800/60 flex items-center justify-center text-xs font-bold text-emerald-400">PY</div>
+                <div>
+                  <span class="text-xs font-semibold text-slate-200 block">SaaS Labs</span>
+                  <span class="text-[10px] text-slate-500">Posted 3 days ago</span>
+                </div>
+              </div>
+              <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                $500.00 <span class="text-[10px] font-normal text-slate-400">Fixed</span>
+              </span>
+            </div>
+            <h3 class="text-base font-bold text-white group-hover:text-blue-400 transition leading-snug">Django REST API & PostgreSQL Database Setup</h3>
+            <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">Need an experienced Python backend engineer to design RESTful endpoints, model database schemas in PostgreSQL, and configure Docker deployment settings.</p>
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">Python</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">Django REST</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">PostgreSQL</span>
+            </div>
+          </div>
+          <div class="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+            <span class="flex items-center gap-1 text-slate-400">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Remote
+            </span>
+            <a href="{% url 'login' %}" class="px-3.5 py-1.5 rounded-lg bg-blue-600/10 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/20 transition font-medium">Apply Now</a>
+          </div>
+        </article>
+
+      {% endfor %}
+
+    </div>
+
+    <div id="no-jobs-msg" class="hidden py-16 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-900/40 space-y-3">
+      <div class="w-12 h-12 rounded-xl bg-slate-800 mx-auto flex items-center justify-center text-slate-500 text-xl">🔍</div>
+      <p class="text-sm font-semibold text-slate-300">No matching jobs found</p>
+      <p class="text-xs text-slate-500 max-w-sm mx-auto">Try adjusting your search criteria or clearing selected filters to view all available listings.</p>
+      <button type="button" onclick="clearSearchFilters()" class="text-xs text-blue-400 hover:underline font-medium">Reset all filters</button>
+    </div>
+
+  </main>
+
+  <!-- Universal Confirm Modal -->
+  <div id="confirmModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4 z-[100]">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl transform transition-all scale-95 opacity-0" id="confirmModalBox">
+      <h3 class="text-base font-bold text-white mb-2">Are you sure?</h3>
+      <p id="confirmModalMsg" class="text-xs text-slate-400 mb-6">Please confirm this action.</p>
+      <div class="flex justify-end gap-3">
+        <button type="button" id="confirmCancelBtn" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition">Cancel</button>
+        <button type="button" id="confirmOkBtn" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-md transition">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client-side Logic -->
+  <script>
+    let activeCategory = 'all';
+
+    function syncAndFilter(val, source) {
+      const heroInput = document.getElementById('hero-search-input');
+      const navInput = document.getElementById('nav-search-input');
+      if (source === 'hero' && navInput) navInput.value = val;
+      if (source === 'nav' && heroInput) heroInput.value = val;
+      filterJobs();
+    }
+
+    function filterJobs() {
+      const heroVal = (document.getElementById('hero-search-input')?.value || '').toLowerCase().trim();
+      const navVal = (document.getElementById('nav-search-input')?.value || '').toLowerCase().trim();
+      const query = heroVal || navVal;
+      const cards = document.querySelectorAll('.job-card');
+      let visibleCount = 0;
+      cards.forEach(card => {
+        const title = (card.getAttribute('data-title') || card.innerText).toLowerCase();
+        const desc = (card.getAttribute('data-desc') || '').toLowerCase();
+        const category = card.getAttribute('data-category') || 'development';
+        const matchesQuery = !query || title.includes(query) || desc.includes(query);
+        const matchesCategory = activeCategory === 'all' || category === activeCategory;
+        if (matchesQuery && matchesCategory) { card.style.display = 'flex'; visibleCount++; }
+        else { card.style.display = 'none'; }
+      });
+      const badge = document.getElementById('job-count-badge');
+      if (badge) badge.innerText = `${visibleCount} job${visibleCount === 1 ? '' : 's'} available`;
+      const noMsg = document.getElementById('no-jobs-msg');
+      if (noMsg) noMsg.classList.toggle('hidden', visibleCount > 0);
+    }
+
+    function filterCategory(cat, btn) {
+      activeCategory = cat;
+      document.querySelectorAll('.category-btn').forEach(b => {
+        b.classList.remove('bg-blue-600', 'text-white');
+        b.classList.add('text-slate-400');
+      });
+      btn.classList.add('bg-blue-600', 'text-white');
+      btn.classList.remove('text-slate-400');
+      filterJobs();
+    }
+
+    function setCategoryFilter(term) {
+      const heroInput = document.getElementById('hero-search-input');
+      if (heroInput) { heroInput.value = term; syncAndFilter(term, 'hero'); }
+    }
+
+    function clearSearchFilters() {
+      const heroInput = document.getElementById('hero-search-input');
+      const navInput = document.getElementById('nav-search-input');
+      if (heroInput) heroInput.value = '';
+      if (navInput) navInput.value = '';
+      activeCategory = 'all';
+      const firstBtn = document.querySelector('.category-btn');
+      if (firstBtn) filterCategory('all', firstBtn);
+      else filterJobs();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        const heroInput = document.getElementById('hero-search-input');
+        const navInput = document.getElementById('nav-search-input');
+        if (heroInput && heroInput.offsetParent !== null) heroInput.focus();
+        else if (navInput) navInput.focus();
+      } else if (e.key === 'Escape' && document.activeElement.tagName === 'INPUT') {
+        document.activeElement.blur();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', filterJobs);
+
+    // Universal confirm modal
+    (function () {
+      let pendingEl = null;
+      const modal = document.getElementById('confirmModal');
+      const box = document.getElementById('confirmModalBox');
+      const msgEl = document.getElementById('confirmModalMsg');
+
+      function openModal(el) {
+        pendingEl = el;
+        msgEl.textContent = el.getAttribute('data-confirm') || 'Please confirm this action.';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        requestAnimationFrame(() => {
+          box.classList.remove('scale-95', 'opacity-0');
+          box.classList.add('scale-100', 'opacity-100');
+        });
+      }
+
+      function closeModal() {
+        box.classList.add('scale-95', 'opacity-0');
+        box.classList.remove('scale-100', 'opacity-100');
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+          pendingEl = null;
+        }, 150);
+      }
+
+      document.addEventListener('click', function (e) {
+        const el = e.target.closest('[data-confirm]');
+        if (el) { e.preventDefault(); openModal(el); }
+      });
+
+      document.getElementById('confirmCancelBtn').addEventListener('click', closeModal);
+
+      document.getElementById('confirmOkBtn').addEventListener('click', function () {
+        if (!pendingEl) return;
+        const el = pendingEl;
+        closeModal();
+        if (el.tagName === 'A') {
+          window.location.href = el.getAttribute('href');
+        } else if (el.tagName === 'BUTTON' && el.form) {
+          el.form.submit();
+        } else if (el.closest('form')) {
+          el.closest('form').submit();
+        }
+      });
+
+      modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
+    })();
+  </script>
+
+</body>
+</html>
